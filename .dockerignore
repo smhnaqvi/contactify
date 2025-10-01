@@ -13,3 +13,6 @@ coverage
 *.log
 tests
 docs
+dist
+*.ts
+!tsconfig.json

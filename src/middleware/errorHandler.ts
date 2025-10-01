@@ -2,11 +2,16 @@
  * Global error handling middleware
  */
 
-const logger = require('../utils/logger');
+import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger.js';
+import { ErrorWithStatusCode } from '../types/index.js';
 
 // Custom error class
-class AppError extends Error {
-  constructor(message, statusCode) {
+export class AppError extends Error implements ErrorWithStatusCode {
+  public statusCode: number;
+  public isOperational: boolean;
+
+  constructor(message: string, statusCode: number) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = true;
@@ -16,7 +21,7 @@ class AppError extends Error {
 }
 
 // Error handling middleware
-const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err: ErrorWithStatusCode, req: Request, res: Response, _next: NextFunction): void => {
   let error = { ...err };
   error.message = err.message;
 
@@ -31,36 +36,36 @@ const errorHandler = (err, req, res, next) => {
   });
 
   // Mongoose bad ObjectId
-  if (err.name === 'CastError') {
+  if ((err as any).name === 'CastError') {
     const message = 'Resource not found';
     error = new AppError(message, 404);
   }
 
   // Mongoose duplicate key
-  if (err.code === 11000) {
+  if ((err as any).code === 11000) {
     const message = 'Duplicate field value entered';
     error = new AppError(message, 400);
   }
 
   // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors).map(val => val.message).join(', ');
+  if ((err as any).name === 'ValidationError') {
+    const message = Object.values((err as any).errors).map((val: any) => val.message).join(', ');
     error = new AppError(message, 400);
   }
 
   // JWT errors
-  if (err.name === 'JsonWebTokenError') {
+  if ((err as any).name === 'JsonWebTokenError') {
     const message = 'Invalid token';
     error = new AppError(message, 401);
   }
 
-  if (err.name === 'TokenExpiredError') {
+  if ((err as any).name === 'TokenExpiredError') {
     const message = 'Token expired';
     error = new AppError(message, 401);
   }
 
   // Nodemailer errors
-  if (err.code === 'ECONNECTION' || err.code === 'EAUTH') {
+  if ((err as any).code === 'ECONNECTION' || (err as any).code === 'EAUTH') {
     const message = 'Email service temporarily unavailable';
     error = new AppError(message, 503);
   }
@@ -73,19 +78,14 @@ const errorHandler = (err, req, res, next) => {
 };
 
 // 404 handler
-const notFound = (req, res, next) => {
+export const notFound = (req: Request, res: Response, next: NextFunction): void => {
   const error = new AppError(`Not found - ${req.originalUrl}`, 404);
   next(error);
 };
 
 // Async error wrapper
-const asyncHandler = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
-};
-
-module.exports = {
-  AppError,
-  errorHandler,
-  notFound,
-  asyncHandler
+export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
 };

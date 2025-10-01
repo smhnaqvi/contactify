@@ -2,6 +2,8 @@
  * Test setup and configuration
  */
 
+import { ContactFormData } from '../dist/types/index.js';
+
 // Set test environment
 process.env.NODE_ENV = 'test';
 process.env.PORT = '3001';
@@ -16,7 +18,23 @@ process.env.RECIPIENT_EMAIL = 'recipient@test.com';
 // Increase timeout for async operations
 jest.setTimeout(10000);
 
+// Mock email service
+jest.mock('../dist/services/emailService.js', () => ({
+  __esModule: true,
+  default: {
+    verifyConnection: jest.fn().mockResolvedValue(true),
+    sendContactEmail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' })
+  }
+}));
+
 // Global test utilities
+declare global {
+  var testUtils: {
+    validContactData: ContactFormData;
+    invalidContactData: Partial<ContactFormData>;
+  };
+}
+
 global.testUtils = {
   validContactData: {
     name: 'John Doe',

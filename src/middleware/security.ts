@@ -2,15 +2,16 @@
  * Security middleware configuration
  */
 
-const helmet = require('helmet');
-const cors = require('cors');
-const rateLimit = require('express-rate-limit');
-const config = require('../config');
-const logger = require('../utils/logger');
+import helmet from 'helmet';
+import cors, { CorsOptions } from 'cors';
+import rateLimit from 'express-rate-limit';
+import { Application, Request, Response } from 'express';
+import config from '../config/index.js';
+import logger from '../utils/logger.js';
 
 // CORS configuration
-const corsOptions = {
-  origin: function (origin, callback) {
+export const corsOptions: CorsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
@@ -32,7 +33,7 @@ const corsOptions = {
 };
 
 // Rate limiting configuration
-const rateLimitOptions = {
+export const rateLimitOptions = {
   windowMs: config.security.rateLimit.windowMs,
   max: config.security.rateLimit.max,
   message: {
@@ -41,7 +42,7 @@ const rateLimitOptions = {
   },
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req, res) => {
+  handler: (req: Request, res: Response): void => {
     logger.warn('Rate limit exceeded', { 
       ip: req.ip,
       userAgent: req.get('User-Agent')
@@ -67,7 +68,7 @@ const helmetOptions = {
 };
 
 // Security middleware setup
-const setupSecurity = (app) => {
+export const setupSecurity = (app: Application): void => {
   // Trust proxy for accurate IP addresses
   app.set('trust proxy', 1);
   
@@ -84,10 +85,4 @@ const setupSecurity = (app) => {
     corsOrigin: config.security.corsOrigin,
     rateLimit: config.security.rateLimit
   });
-};
-
-module.exports = {
-  setupSecurity,
-  corsOptions,
-  rateLimitOptions
 };

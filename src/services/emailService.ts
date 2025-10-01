@@ -2,41 +2,50 @@
  * Email service using Nodemailer
  */
 
-const nodemailer = require('nodemailer');
-const config = require('../config');
-const logger = require('../utils/logger');
+import nodemailer, { Transporter, SendMailOptions } from 'nodemailer';
+import config from '../config/index.js';
+import logger from '../utils/logger.js';
+import { ContactFormData, EmailService as IEmailService } from '../types/index.js';
 
-class EmailService {
+class EmailService implements IEmailService {
+  private transporter: Transporter | null = null;
+
   constructor() {
-    this.transporter = null;
     this.initializeTransporter();
   }
 
-  initializeTransporter() {
+  private initializeTransporter(): void {
     try {
-      this.transporter = nodemailer.createTransporter(config.email.smtp);
+      this.transporter = nodemailer.createTransport(config.email.smtp);
       logger.info('Email transporter initialized successfully');
     } catch (error) {
-      logger.error('Failed to initialize email transporter', { error: error.message });
+      logger.error('Failed to initialize email transporter', { error: (error as Error).message });
       throw error;
     }
   }
 
-  async verifyConnection() {
+  async verifyConnection(): Promise<boolean> {
     try {
+      if (!this.transporter) {
+        throw new Error('Transporter not initialized');
+      }
       await this.transporter.verify();
       logger.info('Email connection verified successfully');
       return true;
     } catch (error) {
-      logger.error('Email connection verification failed', { error: error.message });
+      logger.error('Email connection verification failed', { error: (error as Error).message });
       return false;
     }
   }
 
-  async sendContactEmail(contactData) {
-    const { name, email, subject, message, phone, company } = contactData;
+  async sendContactEmail(contactData: ContactFormData): Promise<any> {
+    if (!this.transporter) {
+      throw new Error('Transporter not initialized');
+    }
 
-    const mailOptions = {
+    const { name, email, subject } = contactData;
+
+    const mailOptions: SendMailOptions = {
       from: `"${name}" <${config.email.smtp.auth.user}>`,
       to: config.email.recipient,
       replyTo: email,
@@ -55,7 +64,7 @@ class EmailService {
       return result;
     } catch (error) {
       logger.error('Failed to send contact email', { 
-        error: error.message,
+        error: (error as Error).message,
         to: config.email.recipient,
         from: email
       });
@@ -63,7 +72,7 @@ class EmailService {
     }
   }
 
-  generateEmailTemplate(data) {
+  private generateEmailTemplate(data: ContactFormData): string {
     const { name, email, subject, message, phone, company } = data;
     
     return `
@@ -133,7 +142,7 @@ class EmailService {
     `;
   }
 
-  generateTextTemplate(data) {
+  private generateTextTemplate(data: ContactFormData): string {
     const { name, email, subject, message, phone, company } = data;
     
     let text = `New Contact Form Submission\n\n`;
@@ -150,4 +159,4 @@ class EmailService {
   }
 }
 
-module.exports = new EmailService();
+export default new EmailService();

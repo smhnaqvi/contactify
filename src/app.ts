@@ -2,17 +2,17 @@
  * Express application setup
  */
 
-const express = require('express');
-const morgan = require('morgan');
-const compression = require('compression');
-const config = require('./config');
-const logger = require('./utils/logger');
-const { setupSecurity } = require('./middleware/security');
-const { errorHandler, notFound } = require('./middleware/errorHandler');
-const routes = require('./routes');
+import express, { Application, Request, Response, NextFunction } from 'express';
+import morgan from 'morgan';
+import compression from 'compression';
+import config from './config/index.js';
+import logger from './utils/logger.js';
+import { setupSecurity } from './middleware/security.js';
+import { errorHandler, notFound } from './middleware/errorHandler.js';
+import routes from './routes/index.js';
 
 // Create Express app
-const app = express();
+const app: Application = express();
 
 // Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);
@@ -25,7 +25,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Compression middleware
-app.use(compression());
+app.use(compression() as any);
 
 // Logging middleware
 if (config.nodeEnv === 'development') {
@@ -35,7 +35,7 @@ if (config.nodeEnv === 'development') {
 }
 
 // Request logging
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction): void => {
   logger.info('Request received', {
     method: req.method,
     url: req.originalUrl,
@@ -65,4 +65,4 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-module.exports = app;
+export default app;

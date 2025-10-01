@@ -2,13 +2,14 @@
  * Integration tests for contact endpoints
  */
 
-const request = require('supertest');
-const app = require('../../src/app');
+import request from 'supertest';
+import app from '../../dist/app.js';
+import { ContactFormData } from '../../dist/types/index.js';
 
 describe('Contact API Integration Tests', () => {
   describe('POST /api/contact', () => {
     test('should submit valid contact form', async () => {
-      const contactData = {
+      const contactData: ContactFormData = {
         name: 'John Doe',
         email: 'john@example.com',
         subject: 'Test Subject',
@@ -92,8 +93,8 @@ describe('Contact API Integration Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Contactify API is running');
-      expect(response.body.version).toBeDefined();
-      expect(response.body.endpoints).toBeDefined();
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data?.endpoints).toBeDefined();
     });
   });
 
@@ -105,7 +106,7 @@ describe('Contact API Integration Tests', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Contactify API');
-      expect(response.body.endpoints).toBeDefined();
+      expect(response.body.data?.endpoints).toBeDefined();
     });
   });
 

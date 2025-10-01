@@ -2,10 +2,12 @@
  * Input validation schemas using Joi
  */
 
-const Joi = require('joi');
+import Joi from 'joi';
+import { Request, Response, NextFunction } from 'express';
+import { ContactFormData } from '../types/index.js';
 
 // Contact form validation schema
-const contactSchema = Joi.object({
+export const contactSchema = Joi.object<ContactFormData>({
   name: Joi.string()
     .min(2)
     .max(100)
@@ -53,7 +55,7 @@ const contactSchema = Joi.object({
 
   // Optional fields
   phone: Joi.string()
-    .pattern(/^[\+]?[1-9][\d]{0,15}$/)
+    .pattern(/^[+]?[1-9][\d]{0,15}$/)
     .optional()
     .messages({
       'string.pattern.base': 'Please provide a valid phone number'
@@ -69,29 +71,25 @@ const contactSchema = Joi.object({
 });
 
 // Validation middleware factory
-const validate = (schema) => {
-  return (req, res, next) => {
-    const { error, value } = schema.validate(req.body, {
+export const validate = (schema: Joi.ObjectSchema<ContactFormData>) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const result = schema.validate(req.body, {
       abortEarly: false,
       stripUnknown: true
     });
 
-    if (error) {
-      const errorMessages = error.details.map(detail => detail.message);
-      return res.status(400).json({
+    if (result.error) {
+      const errorMessages = result.error.details.map(detail => detail.message);
+      res.status(400).json({
         success: false,
         error: 'Validation failed',
         details: errorMessages
       });
+      return;
     }
 
     // Replace req.body with validated and sanitized data
-    req.body = value;
+    req.body = result.value;
     next();
   };
-};
-
-module.exports = {
-  contactSchema,
-  validate
 };

@@ -2,12 +2,13 @@
  * Validation tests
  */
 
-const { contactSchema, validate } = require('../../src/utils/validation');
+import { contactSchema, validate } from '../../dist/utils/validation.js';
+import { ContactFormData } from '../../dist/types/index.js';
 
 describe('Contact Form Validation', () => {
   describe('contactSchema', () => {
     test('should validate correct contact data', () => {
-      const validData = {
+      const validData: ContactFormData = {
         name: 'John Doe',
         email: 'john@example.com',
         subject: 'Test Subject',
@@ -28,7 +29,7 @@ describe('Contact Form Validation', () => {
 
       const { error } = contactSchema.validate(invalidData);
       expect(error).toBeDefined();
-      expect(error.details[0].message).toContain('valid email address');
+      expect(error!.details[0]?.message).toContain('valid email address');
     });
 
     test('should reject short name', () => {
@@ -41,7 +42,7 @@ describe('Contact Form Validation', () => {
 
       const { error } = contactSchema.validate(invalidData);
       expect(error).toBeDefined();
-      expect(error.details[0].message).toContain('at least 2 characters');
+      expect(error!.details[0]?.message).toContain('at least 2 characters');
     });
 
     test('should reject short message', () => {
@@ -54,11 +55,11 @@ describe('Contact Form Validation', () => {
 
       const { error } = contactSchema.validate(invalidData);
       expect(error).toBeDefined();
-      expect(error.details[0].message).toContain('at least 10 characters');
+      expect(error!.details[0]?.message).toContain('at least 10 characters');
     });
 
     test('should accept optional fields', () => {
-      const validData = {
+      const validData: ContactFormData = {
         name: 'John Doe',
         email: 'john@example.com',
         subject: 'Test Subject',
@@ -82,7 +83,7 @@ describe('Contact Form Validation', () => {
 
       const { error } = contactSchema.validate(invalidData);
       expect(error).toBeDefined();
-      expect(error.details[0].message).toContain('valid phone number');
+      expect(error!.details[0]?.message).toContain('valid phone number');
     });
   });
 });

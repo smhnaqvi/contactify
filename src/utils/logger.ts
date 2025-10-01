@@ -2,9 +2,13 @@
  * Simple logging utility
  */
 
-const config = require('../config');
+import config from '../config/index.js';
+import { Logger } from '../types/index.js';
 
-class Logger {
+class LoggerImpl implements Logger {
+  private level: string;
+  private levels: Record<string, number>;
+
   constructor() {
     this.level = config.logging.level;
     this.levels = {
@@ -15,39 +19,41 @@ class Logger {
     };
   }
 
-  shouldLog(level) {
-    return this.levels[level] <= this.levels[this.level];
+  private shouldLog(level: string): boolean {
+    const levelValue = this.levels[level];
+    const currentLevelValue = this.levels[this.level];
+    return levelValue !== undefined && currentLevelValue !== undefined && levelValue <= currentLevelValue;
   }
 
-  formatMessage(level, message, meta = {}) {
+  private formatMessage(level: string, message: string, meta: Record<string, any> = {}): string {
     const timestamp = new Date().toISOString();
     const metaStr = Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : '';
     return `[${timestamp}] ${level.toUpperCase()}: ${message}${metaStr}`;
   }
 
-  error(message, meta = {}) {
+  error(message: string, meta: Record<string, any> = {}): void {
     if (this.shouldLog('error')) {
       console.error(this.formatMessage('error', message, meta));
     }
   }
 
-  warn(message, meta = {}) {
+  warn(message: string, meta: Record<string, any> = {}): void {
     if (this.shouldLog('warn')) {
       console.warn(this.formatMessage('warn', message, meta));
     }
   }
 
-  info(message, meta = {}) {
+  info(message: string, meta: Record<string, any> = {}): void {
     if (this.shouldLog('info')) {
       console.log(this.formatMessage('info', message, meta));
     }
   }
 
-  debug(message, meta = {}) {
+  debug(message: string, meta: Record<string, any> = {}): void {
     if (this.shouldLog('debug')) {
       console.log(this.formatMessage('debug', message, meta));
     }
   }
 }
 
-module.exports = new Logger();
+export default new LoggerImpl();
